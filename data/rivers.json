@@ -1,6 +1,6 @@
 {
   "note": "Illustrative rivers for a demonstration outfitter. Nothing here describes a real river. Class at a flow is base + sensitivity * log2(flow / reference flow), clamped to 1 to 5.5; the gate recomputes every row.",
-  "flow": { "min": 200, "max": 7000, "step": 50 },
+  "flow": { "min": 200, "max": 7000, "step": 10 },
   "rivers": [
     { "id": "elk-fork", "name": "Elk Fork", "tag": "Family float", "miles": 8, "startFt": 4200, "endFt": 4150, "refCfs": 600, "minCfs": 300, "maxCfs": 2500, "minAge": 5, "minLb": 40, "needs": "none", "blurb": "Wide, forgiving water with three small rapids and long pools for swimming.",
       "monthlyCfs": [260, 280, 450, 900, 1800, 2100, 900, 420, 320, 380, 330, 270],

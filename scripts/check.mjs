@@ -34,8 +34,11 @@ for (const rv of rivers.rivers) {
   for (const r of rv.rapids) if (r.mile < 0.3 || r.mile > rv.miles - 0.3) bad(`${rv.id}/${r.name}: the rapid sits at the end of the river, where its drop would be clipped`)
   // water status boundaries
   const w = (f) => M.waterStatus(rv, f)
-  if (w(rv.minCfs - 1) !== 'low' || w(rv.minCfs) !== 'good' || w(rv.maxCfs) !== 'pushy' || w(rv.maxCfs + 1) !== 'closed') bad(`${rv.id}: water status boundaries`)
-  const edge = rv.minCfs + 0.8 * (rv.maxCfs - rv.minCfs); if (w(edge) !== 'good' || w(edge + 1) !== 'pushy') bad(`${rv.id}: the pushy boundary is at ${edge}`)
+  const hardestAt = (f) => Math.max(...rv.rapids.map((r) => refClass(r, rv, f)))
+  const expect = (f) => (f > rv.maxCfs ? 'closed' : f < rv.minCfs ? 'low' : f > rv.minCfs + 0.8 * (rv.maxCfs - rv.minCfs) || hardestAt(f) >= 4.5 ? 'pushy' : 'good')
+  for (let f = 100; f <= 8000; f += 25) if (w(f) !== expect(f)) bad(`${rv.id}: water status at ${f} is ${w(f)}, expected ${expect(f)}`)
+  if (w(rv.minCfs - 1) !== 'low' || w(rv.maxCfs + 1) !== 'closed' || w(rv.maxCfs) !== 'pushy') bad(`${rv.id}: water status boundaries`)
+  near(M.hardest(rv, 1500), hardestAt(1500), 1e-9, `${rv.id} hardest at 1500`); if (M.hardestRapid(rv, 1500).name !== rv.rapids.reduce((a, b) => (refClass(b, rv, 1500) > refClass(a, rv, 1500) ? b : a)).name) bad(`${rv.id}: hardestRapid`)
   if (rv.monthlyCfs.length !== 12) bad(`${rv.id}: needs 12 monthly flows`)
   if (!(rv.minCfs < rv.refCfs && rv.refCfs < rv.maxCfs)) bad(`${rv.id}: the reference flow must be inside the runnable range`)
 }
@@ -43,21 +46,32 @@ if (M.classLabel(2.74) !== 'II+' || M.classLabel(2.76) !== 'III' || M.classLabel
 // quotes
 for (const t of trips.trips) for (const n of [1, 3, 4, 7, 8, 20]) {
   const pct = n >= 8 ? 10 : n >= 4 ? 5 : 0, total = Math.round(t.price * n * (100 - pct)) / 100, q = M.quote(t.price, n, trips.discount, trips.depositPct)
-  near(q.total, total, 1e-9, `${t.slug} total for ${n}`); near(q.deposit, Math.ceil(total * 0.25), 0, `${t.slug} deposit for ${n}`); near(q.pct, pct, 0, `${t.slug} discount for ${n}`)
+  near(q.total, total, 1e-9, `${t.slug} total for ${n}`); near(q.perPerson, total / n, 1e-9, `${t.slug} per person for ${n}`); near(q.gross, t.price * n, 0, `${t.slug} gross for ${n}`); near(q.deposit, Math.ceil(total * 0.25), 0, `${t.slug} deposit for ${n}`); near(q.pct, pct, 0, `${t.slug} discount for ${n}`)
 }
 if (trips.depositPct !== 25) bad('the deposit is pinned at 25% (the About page says so)')
-// eligibility
+// eligibility: age, weight, experience, the water, and the class of the hardest rapid at that flow
 {
   const rv = Object.fromEntries(rivers.rivers.map((r) => [r.id, r]))
-  const ok = M.blockers(rv['granite-run'], { n: 4, age: 14, lb: 120, exp: 'some' }, 1200); if (ok.length) bad('a 14 year old of 120 lb with some experience should fit Granite Run at 1,200: ' + ok.join(' '))
-  if (!M.blockers(rv['granite-run'], { n: 4, age: 11, lb: 120, exp: 'some' }, 1200).length) bad('an 11 year old must not fit Granite Run')
-  if (M.blockers(rv['granite-run'], { n: 4, age: 12, lb: 70, exp: 'some' }, 1200).length) bad('exactly 12 years and 70 lb fit Granite Run (the limits are inclusive)')
-  if (!M.blockers(rv['granite-run'], { n: 4, age: 12, lb: 69, exp: 'some' }, 1200).length) bad('69 lb must not fit Granite Run')
-  if (!M.blockers(rv['granite-run'], { n: 4, age: 14, lb: 60, exp: 'some' }, 1200).length) bad('60 lb must not fit Granite Run')
-  if (!M.blockers(rv['black-narrows'], { n: 4, age: 30, lb: 180, exp: 'some' }, 2200).length) bad('Black Narrows needs class III experience')
-  if (M.blockers(rv['black-narrows'], { n: 4, age: 30, lb: 180, exp: 'iii' }, 2200).length) bad('an experienced adult should fit Black Narrows at 2,200')
-  if (!M.blockers(rv['elk-fork'], { n: 2, age: 30, lb: 180, exp: 'none' }, 3000).some((s) => /closed/.test(s))) bad('Elk Fork is closed at 3,000')
-  if (!M.blockers(rv['elk-fork'], { n: 2, age: 30, lb: 180, exp: 'none' }, 250).some((s) => /too low/.test(s))) bad('Elk Fork is too low at 250')
+  const g = (o) => ({ n: 4, age: 30, lb: 180, exp: 'iii', ...o })
+  const fits = (id, o, f) => !M.blockers(rv[id], g(o), f).length
+  if (!fits('granite-run', { age: 14, lb: 120, exp: 'some' }, 1200)) bad('a 14 year old of 120 lb with some experience should fit Granite Run at 1,200: ' + M.blockers(rv['granite-run'], g({ age: 14, lb: 120, exp: 'some' }), 1200).join(' '))
+  if (fits('granite-run', { age: 11, lb: 120, exp: 'some' }, 1200)) bad('an 11 year old must not fit Granite Run')
+  if (!fits('granite-run', { age: 14, lb: 70, exp: 'some' }, 1200) || fits('granite-run', { age: 14, lb: 69, exp: 'some' }, 1200)) bad('Granite Run: 70 lb fits, 69 lb does not (the limits are inclusive)')
+  if (!fits('granite-run', { age: 12, lb: 70, exp: 'some' }, 1000)) bad('exactly 12 years and 70 lb fit Granite Run at 1,000')
+  if (fits('black-narrows', { exp: 'some' }, 2200)) bad('Black Narrows needs class III experience')
+  if (!fits('black-narrows', { exp: 'iii' }, 2200)) bad('an experienced adult should fit Black Narrows at 2,200')
+  if (!M.blockers(rv['elk-fork'], g({ exp: 'none' }), 3000).some((s) => /closed/.test(s))) bad('Elk Fork is closed at 3,000')
+  if (!M.blockers(rv['elk-fork'], g({ exp: 'none' }), 250).some((s) => /too low/.test(s))) bad('Elk Fork is too low at 250')
+  // the class ceiling: a five year old with no experience cannot be asked to run class III, whatever the river's own limits say
+  const kid = { age: 5, lb: 40, exp: 'none' }
+  if (!fits('elk-fork', kid, 600)) bad('a 5 year old fits Elk Fork at 600 cfs (hardest rapid II+)')
+  const why = M.blockers(rv['elk-fork'], g(kid), 1200); if (!why.some((s) => /Staircase/.test(s) && /class III/.test(s) && /limit is class II\+/.test(s))) bad('a 5 year old at 1,200 cfs must be refused for The Staircase (class III), with the limit named: ' + why.join(' | '))
+  if (fits('granite-run', { age: 12, lb: 120, exp: 'some' }, 3000)) bad('a 12 year old must not be sent down Granite Run at 3,000 cfs (Dentist\'s Chair is class V)')
+  if (!fits('granite-run', { age: 30, lb: 180, exp: 'iii' }, 3000)) bad('an experienced adult fits Granite Run at 3,000 cfs')
+  // ceilings
+  for (const [o, cap] of [[{ age: 30, exp: 'none' }, 2.5], [{ age: 30, exp: 'some' }, 4], [{ age: 30, exp: 'iii' }, 5.5], [{ age: 9, exp: 'iii' }, 2.5], [{ age: 10, exp: 'iii' }, 3.5], [{ age: 13, exp: 'iii' }, 3.5], [{ age: 14, exp: 'iii' }, 5.5], [{ age: 14, exp: 'some' }, 4]]) near(M.classCeiling(g(o)), cap, 0, `class ceiling for ${JSON.stringify(o)}`)
+  // a class above the cap is flagged, never printed as if measured
+  const maw = rv['black-narrows'].rapids[2]; if (!/\(cap\)/.test(M.classShown(maw, 2200, 6000)) || /\(cap\)/.test(M.classShown(maw, 2200, 2200))) bad('classShown flags only capped values')
 }
 near(M.flowFraction(200, 200, 7000), 0, 1e-12, 'flow fraction at the minimum'); near(M.flowFraction(7000, 200, 7000), 1, 1e-12, 'flow fraction at the maximum'); near(M.flowFraction(1183.2, 200, 7000), 0.5, 1e-3, 'flow fraction is logarithmic')
 
@@ -66,7 +80,7 @@ const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.
 const files = walk(out), htmls = files.filter((f) => f.endsWith('.html'))
 const rel = (f) => path.relative(out, f)
 const text = (h) => h.replace(/<script[\s\S]*?<\/script>/g, ' ').replace(/<style[\s\S]*?<\/style>/g, ' ').replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ')
-const NAV = [['trips', 'Trips'], ['plan', 'Plan'], ['safety', 'Safety'], ['about', 'About'], ['contact', 'Contact'], ['book-now', 'Book now']]
+const NAV = [['trips', 'Trips'], ['plan', 'Find a trip'], ['safety', 'Safety'], ['about', 'About'], ['contact', 'Contact'], ['book-now', 'Request a trip']]
 const exists = (u) => { const p = decodeURIComponent(u.split('#')[0].split('?')[0]); if (!p || p === '/') return true; const f = path.join(out, p); return fs.existsSync(f) && (fs.statSync(f).isFile() || fs.existsSync(path.join(f, 'index.html'))) }
 const titles = []
 for (const f of htmls) {
@@ -104,10 +118,11 @@ for (const t of trips.trips) if (!rivers.rivers.some((r) => r.id === t.river)) b
 {
   const about = text(fs.readFileSync(path.join(out, 'about/index.html'), 'utf8'))
   for (const rv of rivers.rivers) for (const r of rv.rapids) {
-    const row = `${rv.name} ${r.name} ${r.base} ${r.sens} ${label(refClass(r, rv, rv.refCfs / 2))} ${label(refClass(r, rv, rv.refCfs))} ${label(refClass(r, rv, rv.refCfs * 2))}`
+    const shown = (f) => label(refClass(r, rv, f)) + (r.base + r.sens * Math.log2(f / rv.refCfs) > 5.5 + 1e-9 ? ' (cap)' : '')
+    const row = `${rv.name} ${r.name} ${r.base} ${r.sens} ${shown(rv.refCfs / 2)} ${shown(rv.refCfs)} ${shown(rv.refCfs * 2)}`
     if (!about.includes(row)) bad(`about: the table row for ${r.name} should read "${row}"`)
   }
-  const home = text(fs.readFileSync(path.join(out, 'index.html'), 'utf8'))
+  const homeRaw = fs.readFileSync(path.join(out, 'index.html'), 'utf8'), home = text(homeRaw)
   for (const rv of rivers.rivers) { const s = `${rv.miles} miles · riders ${rv.minAge}+ and ${rv.minLb} lb+ · runs from ${rv.minCfs.toLocaleString('en-US')} to ${rv.maxCfs.toLocaleString('en-US')} cfs`; if (!home.includes(s)) bad(`home: the card for ${rv.name} should say "${s}"`) }
   const tp = text(fs.readFileSync(path.join(out, 'trips/index.html'), 'utf8'))
   for (const t of trips.trips) if (!tp.includes(`$${t.price} per person`)) bad(`trips: the price of ${t.title} should print as $${t.price} per person`)
@@ -117,6 +132,8 @@ for (const t of trips.trips) if (!rivers.rivers.some((r) => r.id === t.river)) b
     const hours = t.days > 1 ? `${t.days} days` : `${t.hours} hours`; if (!page.includes(hours)) bad(`${t.slug}: should say ${hours}`)
   }
   if (!/5% from four people and 10% from eight/.test(about) || !/25% of the total/.test(about)) bad('about: the discount and deposit rules must match trips.json')
+  if (!/class II\+ with no experience, III\+ with a few easy trips, V\+ with class III experience; and II\+ under age 10, III\+ under age 14/.test(about)) bad('about: the class ceilings printed must match EXP_CAP and the age caps')
+  if (!/cubic feet per second/.test(home) && !/cubic feet per second/.test(about)) bad('cfs must be defined in visible text')
 }
 
 // ---------------------------------------------------------------- the theme
@@ -133,16 +150,20 @@ const toOk = (h) => { const [r, g, b] = rgb(h).map(lin); const l = Math.cbrt(0.4
 const fromOk = ([L, a, b]) => { const l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3), m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3), s = Math.pow(L - 0.0894841775 * a - 1.291485548 * b, 3); const c = [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s].map((v) => Math.min(1, Math.max(0, v))); return '#' + c.map((v) => Math.round((v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055) * 255).toString(16).padStart(2, '0')).join('') }
 const mix = (a, pa, b) => { const x = toOk(a), y = toOk(b); return fromOk(x.map((v, i) => v * pa + y[i] * (1 - pa))) }
 for (const [scheme, t] of [['light', light], ['dark', dark]]) {
-  const pairs = [['ink', 'bg', 4.5], ['ink', 'card', 4.5], ['ink2', 'bg', 4.5], ['ink2', 'card', 4.5], ['on-raft', 'raft', 4.5], ['on-ok', 'ok', 4.5], ['on-bad', 'bad', 4.5], ['on-pfd', 'pfd', 4.5], ['bad', 'card', 4.5], ['ok', 'card', 3], ['warn', 'card', 4.5]]
+  const pairs = [['ink', 'bg', 4.5], ['ink', 'card', 4.5], ['ink2', 'bg', 4.5], ['ink2', 'card', 4.5], ['on-hi', 'hi', 4.5], ['on-btn', 'btn', 4.5], ['on-hdr', 'hdr', 4.5], ['hi', 'hdr', 4.5], ['on-ok', 'ok', 4.5], ['on-bad', 'bad', 4.5], ['on-pfd', 'pfd', 4.5], ['bad', 'card', 4.5], ['bad', 'bg', 4.5], ['ok', 'card', 3], ['warn', 'card', 4.5]]
   for (const [a, b, min] of pairs) if (t[a] && t[b] && cr(t[a], t[b]) < min) bad(`globals.css: ${scheme} ${a} on ${b} is ${cr(t[a], t[b]).toFixed(2)}:1 (needs ${min})`)
   for (const [a, b] of [['on-k1', 'k2'], ['on-k3', 'k3'], ['on-k4', 'k4'], ['on-k5', 'k5']]) if (cr(t[a] || light[a], t[b]) < 4.5) bad(`globals.css: ${scheme} ${a} on ${b} is ${cr(t[a] || light[a], t[b]).toFixed(2)}:1`)
-  // water-text = the water colour 58% (70% in dark) mixed toward the ink, over the page: at every end of the flow range
-  for (const f of [0, 0.4, 1]) {
-    const water = mix(t['water-clear'], 1 - f, t['water-silt']), wt = mix(water, scheme === 'dark' ? 0.7 : 0.58, t.ink)
+  // the heat scale: low to mid by --f1, mid to high by --f2; water-text = water mixed toward the ink (46% light, 72% dark), over the page at every point of the scale
+  for (const f of [0, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 1]) {
+    const f1 = Math.min(1, 2 * f), f2 = Math.max(0, 2 * f - 1)
+    const water = mix(mix(t['w-mid'], f1, t['w-low']), 1 - f2, t['w-high']), wt = mix(water, scheme === 'dark' ? 0.72 : 0.46, t.ink)
     for (const bg of ['bg', 'card']) if (cr(wt, t[bg]) < 4.5) bad(`globals.css: ${scheme} water-text at flow ${f} on ${bg} is ${cr(wt, t[bg]).toFixed(2)}:1 (needs 4.5)`)
+    // the hero's wash: the water at 30% over the page (top) and 12% (middle): ink, ink2 and the water-text must stay readable on it
+    for (const pct of [0.3, 0.12]) { const wash = mix(water, pct, t.bg); for (const [name, fg] of [['ink', t.ink], ['ink2', t.ink2], ['water-text', wt]]) if (cr(fg, wash) < 4.5) bad(`globals.css: ${scheme} ${name} on the hero wash (${pct * 100}% water) at flow ${f} is ${cr(fg, wash).toFixed(2)}:1 (needs 4.5)`) }
   }
 }
-if (!/--water:\s*color-mix\(in oklab,\s*var\(--water-clear\)[^;]*var\(--water-silt\)\)/.test(css)) bad('globals.css: --water must be a mix of --water-clear and --water-silt')
+if (!/--water:\s*color-mix\(in oklab,\s*color-mix\(in oklab,\s*var\(--w-mid\) calc\(var\(--f1\)[^;]*var\(--w-low\)\)[^;]*var\(--w-high\)\)/.test(css)) bad('globals.css: --water must be the three-stop heat scale low, mid, high')
+  { const th = fs.readFileSync(path.join(root, 'components/Theme.tsx'), 'utf8'); if (!/Math\.min\(1, 2 \* f\)/.test(th) || !/Math\.max\(0, 2 \* f - 1\)/.test(th)) bad('Theme.tsx: --f1 and --f2 must be min(1, 2f) and max(0, 2f - 1)') }
 {
   const prof = fs.readFileSync(path.join(root, 'components/RiverProfile.tsx'), 'utf8')
   if (!/viewBox=\{`0 0 \$\{W\} \$\{H\}`\}/.test(prof) || !/width=\{W\}/.test(prof) || !/Math\.max\(280/.test(prof)) bad('RiverProfile: the picture must be drawn in pixels from the container width (minimum 280)')
