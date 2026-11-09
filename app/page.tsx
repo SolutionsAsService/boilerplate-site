@@ -1,80 +1,33 @@
-import Image from "next/image";
+import GaugeBar from '@/components/GaugeBar'
+import RiverProfile from '@/components/RiverProfile'
+import Seasons from '@/components/Seasons'
+import CarryLink from '@/components/CarryLink'
+import { RIVERS } from '@/lib/data'
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/rafting-logo.svg"
-          alt="Rafting Adventures logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Plan your adventure by exploring our packages.
-          </li>
-          <li>Book your rafting trip today and experience the thrill!</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="/book-now"
-          >
-            Book Now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="/about-us"
-          >
-            Learn More
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="/safety"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Safety Guidelines
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="/gallery"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Gallery
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="/contact-us"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Contact Us →
-        </a>
-      </footer>
-    </div>
-  );
+    <>
+      <section className="wrap hero">
+        <p className="kicker">Whitewater rafting · three rivers · one gauge</p>
+        <h1>The river decides.</h1>
+        <p className="lede">The same rapid is a splash at 600 cfs and a wall of water at 3,000. Move the gauge below: every rapid, every trip and the colour of this page follow it. Then see what your group can ride today.</p>
+        <GaugeBar />
+        <RiverProfile />
+        <div className="chips"><CarryLink href="/plan/" className="btn">What can my group ride?</CarryLink><CarryLink href="/trips/" className="chip">See the five trips</CarryLink></div>
+      </section>
+      <section className="wrap page">
+        <h2>Three rivers</h2>
+        <ul className="rivers">
+          {RIVERS.map((r) => (
+            <li key={r.id}><p className="kick">{r.tag}</p><h3>{r.name}</h3><p>{r.blurb}</p><p className="meta">{r.miles} miles · riders {r.minAge}+ and {r.minLb} lb+ · runs from {r.minCfs.toLocaleString('en-US')} to {r.maxCfs.toLocaleString('en-US')} cfs</p></li>
+          ))}
+        </ul>
+        <h2>When to go</h2>
+        <p className="prose">Rivers rise with the snowmelt and fall by late summer. Each month below is that river's typical flow; press one to set the gauge to it.</p>
+        <Seasons />
+        <h2>How we decide</h2>
+        <p className="prose">We close a river when it is too high or too low to run well, and we tell you why. The class of each rapid at each level comes from one formula that you can read on the <CarryLink href="/about/">About page</CarryLink>. Read <CarryLink href="/safety/">Safety</CarryLink> before you book.</p>
+      </section>
+    </>
+  )
 }

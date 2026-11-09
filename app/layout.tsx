@@ -1,38 +1,27 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"], // Adding font weights
-  display: "swap", // Improve performance
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  weight: ["400", "700"], // Adding font weights
-  display: "swap", // Improve performance
-});
+import type { Metadata, Viewport } from 'next'
+import './globals.css'
+import Nav from '@/components/Nav'
+import Footer from '@/components/Footer'
+import Theme from '@/components/Theme'
+import { SITE } from '@/lib/data'
 
 export const metadata: Metadata = {
-  title: "Rafting Adventures",
-  description: "Explore the thrill of white-water rafting with us!",
-};
+  title: { default: `${SITE.name}: the river decides the trip`, template: `%s | ${SITE.name}` },
+  description: 'A whitewater rafting site where the river level changes every rapid. Move the gauge and watch the class, the trips and the page itself change. A demonstration outfitter.',
+  icons: { icon: '/icon.svg' },
+}
+export const viewport: Viewport = { width: 'device-width', initialScale: 1 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-900`}
-      >
-        {children}
+      <body>
+        <a className="skip" href="#main">Skip to the content</a>
+        <Theme />
+        <Nav />
+        <main id="main">{children}</main>
+        <Footer />
       </body>
     </html>
-  );
+  )
 }

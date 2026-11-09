@@ -1,0 +1,15 @@
+{
+  "note": "Illustrative rivers for a demonstration outfitter. Nothing here describes a real river. Class at a flow is base + sensitivity * log2(flow / reference flow), clamped to 1 to 5.5; the gate recomputes every row.",
+  "flow": { "min": 200, "max": 7000, "step": 50 },
+  "rivers": [
+    { "id": "elk-fork", "name": "Elk Fork", "tag": "Family float", "miles": 8, "startFt": 4200, "endFt": 4150, "refCfs": 600, "minCfs": 300, "maxCfs": 2500, "minAge": 5, "minLb": 40, "needs": "none", "blurb": "Wide, forgiving water with three small rapids and long pools for swimming.",
+      "monthlyCfs": [260, 280, 450, 900, 1800, 2100, 900, 420, 320, 380, 330, 270],
+      "rapids": [ { "name": "Riffle Row", "mile": 1.5, "base": 1.5, "sens": 0.4, "dropFt": 3 }, { "name": "Boulder Garden", "mile": 4.0, "base": 2.0, "sens": 0.5, "dropFt": 5 }, { "name": "The Staircase", "mile": 6.5, "base": 2.5, "sens": 0.6, "dropFt": 8 } ] },
+    { "id": "granite-run", "name": "Granite Run", "tag": "Classic day", "miles": 12, "startFt": 3800, "endFt": 3500, "refCfs": 1200, "minCfs": 600, "maxCfs": 4500, "minAge": 12, "minLb": 70, "needs": "some", "blurb": "Steady rapids between granite walls: big enough to wake you up, short enough to talk about at lunch.",
+      "monthlyCfs": [500, 520, 900, 2000, 3600, 4200, 1800, 900, 650, 700, 600, 520],
+      "rapids": [ { "name": "Warm-up", "mile": 1.0, "base": 2.0, "sens": 0.5, "dropFt": 6 }, { "name": "Pinball", "mile": 4.5, "base": 3.0, "sens": 0.8, "dropFt": 15 }, { "name": "Dentist's Chair", "mile": 8.0, "base": 3.5, "sens": 1.0, "dropFt": 20 }, { "name": "Washboard", "mile": 10.5, "base": 2.0, "sens": 0.5, "dropFt": 8 } ] },
+    { "id": "black-narrows", "name": "Black Narrows", "tag": "Expert only", "miles": 10, "startFt": 3100, "endFt": 2650, "refCfs": 2200, "minCfs": 1200, "maxCfs": 6000, "minAge": 16, "minLb": 100, "needs": "iii", "blurb": "A steep, pushy gorge. You must have paddled class III before; the guides will check.",
+      "monthlyCfs": [900, 950, 1600, 3200, 5600, 6400, 2800, 1400, 1100, 1200, 1000, 900],
+      "rapids": [ { "name": "Gatekeeper", "mile": 1.5, "base": 3.5, "sens": 0.9, "dropFt": 18 }, { "name": "The Maw", "mile": 4.5, "base": 4.0, "sens": 1.2, "dropFt": 30 }, { "name": "Coffin Corner", "mile": 6.5, "base": 4.5, "sens": 1.4, "dropFt": 40 }, { "name": "Exit Exam", "mile": 9.0, "base": 3.0, "sens": 0.8, "dropFt": 12 } ] }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "note": "Illustrative prices in US dollars per person. Group discount: 5% from 4 people, 10% from 8. Deposit: 25% of the total, rounded up to the dollar.",
+  "discount": [ { "from": 8, "pct": 10 }, { "from": 4, "pct": 5 } ],
+  "depositPct": 25,
+  "trips": [
+    { "slug": "elk-fork-float", "river": "elk-fork", "title": "Elk Fork family float", "hours": 3, "days": 1, "price": 65, "meals": "Snacks", "includes": ["Raft, paddles, life jacket and helmet", "A guide for every raft", "Dry bags for phones and keys"] },
+    { "slug": "elk-fork-full-day", "river": "elk-fork", "title": "Elk Fork full day with a riverside lunch", "hours": 6, "days": 1, "price": 110, "meals": "Lunch", "includes": ["Everything in the float", "A hot lunch on the bank", "Time to swim the pools"] },
+    { "slug": "granite-run-day", "river": "granite-run", "title": "Granite Run day trip", "hours": 6, "days": 1, "price": 135, "meals": "Lunch", "includes": ["Wetsuit jacket and booties", "A guide for every raft", "Lunch and photos of the big rapid"] },
+    { "slug": "granite-run-overnight", "river": "granite-run", "title": "Granite Run overnight", "hours": 10, "days": 2, "price": 340, "meals": "Dinner, breakfast and lunch", "includes": ["Two days on the river", "Tents, sleeping pads and a camp kitchen", "Gear carried on a support raft"] },
+    { "slug": "black-narrows-expert", "river": "black-narrows", "title": "Black Narrows expert day", "hours": 6, "days": 1, "price": 175, "meals": "Lunch", "includes": ["Wetsuit, drysuit top and booties", "A guide for every raft and a safety kayaker", "A scouting stop above Coffin Corner"] }
+  ]
+}
