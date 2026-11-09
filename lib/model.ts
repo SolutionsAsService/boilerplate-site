@@ -43,7 +43,7 @@ export function waterStatus(river: River, cfs: number): Water {
   if (cfs > river.maxCfs) return 'closed'
   if (cfs < river.minCfs) return 'low'
   if (cfs > river.minCfs + 0.8 * (river.maxCfs - river.minCfs)) return 'pushy'
-  return hardest(river, cfs) >= PUSHY_CLASS ? 'pushy' : 'good'
+  return Math.round(hardest(river, cfs) * 2) / 2 >= PUSHY_CLASS ? 'pushy' : 'good'
 }
 export const CLASS_WORDS = 'Class I easy · II novice · III intermediate · IV advanced · V expert. A + means harder than the number.'
 export const WATER_WORDS: Record<Water, string> = { low: 'Too low: scraping', good: 'Good water', pushy: 'Pushy: big water', closed: 'Closed: too high' }

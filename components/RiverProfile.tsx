@@ -19,7 +19,7 @@ export default function RiverProfile() {
 
   useEffect(() => {
     const el = box.current; if (!el) return
-    const inner = () => { const cs = getComputedStyle(el); return Math.max(280, Math.floor(el.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth))) }
+    const inner = () => { const cs = getComputedStyle(el); return Math.max(240, Math.floor(el.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth))) }
     const ro = new ResizeObserver(() => setW(inner()))
     ro.observe(el); setW(inner())
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)'); setReduce(mq.matches)
@@ -74,7 +74,7 @@ export default function RiverProfile() {
       <div className="chips" role="group" aria-label="Choose a river">
         {RIVERS.map((r) => <button key={r.id} type="button" className="chip" aria-pressed={r.id === id} onClick={() => setChoice({ river: r.id })}>{r.name}<small>{r.tag}</small></button>)}
       </div>
-      <svg role="img" aria-labelledby="prof-t prof-d" width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+      <svg className={(narrow ? 'narrow ' : '') + (ok ? '' : 'shut')} role="img" aria-labelledby="prof-t prof-d" width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
         <title id="prof-t">{`${river.name} at ${fmtCfs(cfs)}: the river from mile 0 to mile ${river.miles}, with its rapids and their class`}</title>
         <desc id="prof-d">{`${river.rapids.map((r) => `${r.name}, mile ${r.mile}, class ${classShown(r, river.refCfs, cfs)}`).join('. ')}. ${WATER_WORDS[water]}. Heights are exaggerated ${exag} times.`}</desc>
         <path className={'wfill ' + water} d={line + `L${X(river.miles)} ${H - B}L${X(0)} ${H - B}Z`} />
@@ -91,7 +91,7 @@ export default function RiverProfile() {
         {ticks.map((m) => <g key={m}><line className="tick" x1={X(m)} x2={X(m)} y1={H - B} y2={H - B + 5} /><text className="tl" x={X(m)} y={H - B + 20} textAnchor="middle">{m}</text></g>)}
         <text className="tl" x={W - R} y={H - B + 38} textAnchor="end">miles downstream</text>
         {river.rapids.map((r, i) => {
-          const c = classAt(r, river.refCfs, cfs), rad = 9 * Math.sqrt(c) * (narrow ? 0.9 : 1), x = Math.min(W - R - rad, Math.max(L + rad, X(r.mile))), y = Y(elevation(river, r.mile)), up = narrow ? 22 : i % 2 === 0 ? 34 : 56
+          const c = classAt(r, river.refCfs, cfs), rad = 9 * Math.sqrt(c) * (narrow ? 0.95 : 1), x = Math.min(W - R - rad, Math.max(L + rad, X(r.mile))), y = Y(elevation(river, r.mile)), up = narrow ? 22 : i % 2 === 0 ? 34 : 56
           const by = Math.max(rad + 6, y - up - rad), k = Math.min(5, Math.floor(Math.round(c * 2) / 2))
           return (
             <g key={r.name} className={'rap k' + k}>

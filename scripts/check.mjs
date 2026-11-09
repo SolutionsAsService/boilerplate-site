@@ -35,7 +35,7 @@ for (const rv of rivers.rivers) {
   // water status boundaries
   const w = (f) => M.waterStatus(rv, f)
   const hardestAt = (f) => Math.max(...rv.rapids.map((r) => refClass(r, rv, f)))
-  const expect = (f) => (f > rv.maxCfs ? 'closed' : f < rv.minCfs ? 'low' : f > rv.minCfs + 0.8 * (rv.maxCfs - rv.minCfs) || hardestAt(f) >= 4.5 ? 'pushy' : 'good')
+  const expect = (f) => (f > rv.maxCfs ? 'closed' : f < rv.minCfs ? 'low' : f > rv.minCfs + 0.8 * (rv.maxCfs - rv.minCfs) || Math.round(hardestAt(f) * 2) / 2 >= 4.5 ? 'pushy' : 'good')
   for (let f = 100; f <= 8000; f += 25) if (w(f) !== expect(f)) bad(`${rv.id}: water status at ${f} is ${w(f)}, expected ${expect(f)}`)
   if (w(rv.minCfs - 1) !== 'low' || w(rv.maxCfs + 1) !== 'closed' || w(rv.maxCfs) !== 'pushy') bad(`${rv.id}: water status boundaries`)
   near(M.hardest(rv, 1500), hardestAt(1500), 1e-9, `${rv.id} hardest at 1500`); if (M.hardestRapid(rv, 1500).name !== rv.rapids.reduce((a, b) => (refClass(b, rv, 1500) > refClass(a, rv, 1500) ? b : a)).name) bad(`${rv.id}: hardestRapid`)
@@ -76,6 +76,26 @@ if (trips.depositPct !== 25) bad('the deposit is pinned at 25% (the About page s
   const maw = rv['black-narrows'].rapids[2]; if (!/\(cap\)/.test(M.classShown(maw, 2200, 6000)) || /\(cap\)/.test(M.classShown(maw, 2200, 2200))) bad('classShown flags only capped values')
 }
 near(M.flowFraction(200, 200, 7000), 0, 1e-12, 'flow fraction at the minimum'); near(M.flowFraction(7000, 200, 7000), 1, 1e-12, 'flow fraction at the maximum'); near(M.flowFraction(1183.2, 200, 7000), 0.5, 1e-3, 'flow fraction is logarithmic')
+
+// the words and formats the pages print
+if (M.fmtCfs(1200) !== '1,200 cfs' || M.money(1093.5) !== '$1,093.50' || M.money(65) !== '$65' || M.money(121.5) !== '$121.50') bad('fmtCfs and money formats')
+if (M.WATER_WORDS.low !== 'Too low: scraping' || M.WATER_WORDS.good !== 'Good water' || M.WATER_WORDS.pushy !== 'Pushy: big water' || M.WATER_WORDS.closed !== 'Closed: too high') bad('WATER_WORDS')
+for (const rv of rivers.rivers) {
+  const st = rv.monthlyCfs.map((c) => (c > rv.maxCfs ? 'closed' : c < rv.minCfs ? 'low' : c > rv.minCfs + 0.8 * (rv.maxCfs - rv.minCfs) || Math.round(Math.max(...rv.rapids.map((r) => refClass(r, rv, c))) * 2) / 2 >= 4.5 ? 'pushy' : 'good'))
+  if (JSON.stringify(M.seasonMonths(rv)) !== JSON.stringify(st)) bad(`${rv.id}: seasonMonths`)
+  const mm = M.MONTHS.filter((_, i) => st[i] === 'good' || st[i] === 'pushy'); if (JSON.stringify(M.runnableMonths(rv)) !== JSON.stringify(mm)) bad(`${rv.id}: runnableMonths`)
+  if (mm.length < 4) bad(`${rv.id}: runnable in only ${mm.length} months`)
+}
+{
+  const rv = rivers.rivers.find((r) => r.id === 'granite-run'), G = (o) => ({ n: 4, age: 30, lb: 180, exp: 'iii', ...o })
+  const one = (o, f) => M.blockers(rv, G(o), f)
+  if (one({ age: 11 }, 1000)[0] !== 'The youngest rider must be 12 or older (you said 11).') bad('the age refusal sentence: ' + one({ age: 11 }, 1000)[0])
+  if (one({ lb: 60 }, 1000)[0] !== 'The lightest rider must weigh at least 70 lb (you said 60).') bad('the weight refusal sentence: ' + one({ lb: 60 }, 1000)[0])
+  if (one({ exp: 'none' }, 1000)[0] !== 'Riders need at least a little paddling experience.') bad('the experience refusal sentence')
+  if (!one({}, 5000).includes('At 5,000 cfs the river is closed: it is above 4,500 cfs.') || !one({}, 500).includes('At 500 cfs the river is too low: it needs 600 cfs.')) bad('the water refusal sentences')
+  // the refusal never contradicts itself: the class named is above the limit named
+  for (const f of [700, 1500, 2100, 2600, 3000, 3600]) for (const g2 of [{ age: 12, exp: 'some' }, { age: 12, exp: 'iii' }, { age: 20, exp: 'some' }]) for (const s of one(g2, f).filter((x) => /hardest rapid/.test(x))) { const [, a, b] = s.match(/is class ([IV+]+)\. This group's limit is class ([IV+]+)/) || []; const R = { I: 1, II: 2, III: 3, IV: 4, V: 5 }, val = (x) => R[x.replace('+', '')] + (x.endsWith('+') ? 0.5 : 0); if (!(val(a) > val(b))) bad(`refusal contradicts itself at ${f}: ${s}`) }
+}
 
 // ---------------------------------------------------------------- pages
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? (e.name === '_next' ? [] : walk(path.join(d, e.name))) : [path.join(d, e.name)])
@@ -150,6 +170,7 @@ const cr = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.
 // oklab mix, as CSS color-mix(in oklab, a p%, b)
 const toOk = (h) => { const [r, g, b] = rgb(h).map(lin); const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b); return [0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s] }
 const fromOk = ([L, a, b]) => { const l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3), m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3), s = Math.pow(L - 0.0894841775 * a - 1.291485548 * b, 3); const c = [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s].map((v) => Math.min(1, Math.max(0, v))); return '#' + c.map((v) => Math.round((v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055) * 255).toString(16).padStart(2, '0')).join('') }
+const mixLch = (a, pa, b) => { const x = toOk(a), y = toOk(b), lch = (o) => [o[0], Math.hypot(o[1], o[2]), (Math.atan2(o[2], o[1]) * 180) / Math.PI], p = lch(x), q = lch(y); let dh = q[2] - p[2]; if (dh > 180) dh -= 360; if (dh < -180) dh += 360; const L = p[0] * pa + q[0] * (1 - pa), C = p[1] * pa + q[1] * (1 - pa), h = ((p[2] + dh * (1 - pa)) * Math.PI) / 180; return fromOk([L, C * Math.cos(h), C * Math.sin(h)]) }
 const mix = (a, pa, b) => { const x = toOk(a), y = toOk(b); return fromOk(x.map((v, i) => v * pa + y[i] * (1 - pa))) }
 for (const [scheme, t] of [['light', light], ['dark', dark]]) {
   const pairs = [['ink', 'bg', 4.5], ['ink', 'card', 4.5], ['ink2', 'bg', 4.5], ['ink2', 'card', 4.5], ['on-hi', 'hi', 4.5], ['on-btn', 'btn', 4.5], ['on-hdr', 'hdr', 4.5], ['hi', 'hdr', 4.5], ['on-ok', 'ok', 4.5], ['on-bad', 'bad', 4.5], ['on-pfd', 'pfd', 4.5], ['bad', 'card', 4.5], ['bad', 'bg', 4.5], ['ok', 'card', 3], ['warn', 'card', 4.5]]
@@ -158,17 +179,17 @@ for (const [scheme, t] of [['light', light], ['dark', dark]]) {
   // the heat scale: low to mid by --f1, mid to high by --f2; water-text = water mixed toward the ink (46% light, 72% dark), over the page at every point of the scale
   for (const f of [0, 0.1, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9, 1]) {
     const f1 = Math.min(1, 2 * f), f2 = Math.max(0, 2 * f - 1)
-    const water = mix(mix(t['w-mid'], f1, t['w-low']), 1 - f2, t['w-high']), wt = mix(water, scheme === 'dark' ? 0.72 : 0.46, t.ink)
+    const water = mixLch(mixLch(t['w-mid'], f1, t['w-low']), 1 - f2, t['w-high']), wt = mix(water, scheme === 'dark' ? 0.72 : 0.46, t.ink)
     for (const bg of ['bg', 'card']) if (cr(wt, t[bg]) < 4.5) bad(`globals.css: ${scheme} water-text at flow ${f} on ${bg} is ${cr(wt, t[bg]).toFixed(2)}:1 (needs 4.5)`)
     // the hero's wash: the water at 30% over the page (top) and 12% (middle): ink, ink2 and the water-text must stay readable on it
     for (const pct of [0.3, 0.12]) { const wash = mix(water, pct, t.bg); for (const [name, fg] of [['ink', t.ink], ['ink2', t.ink2], ['water-text', wt]]) if (cr(fg, wash) < 4.5) bad(`globals.css: ${scheme} ${name} on the hero wash (${pct * 100}% water) at flow ${f} is ${cr(fg, wash).toFixed(2)}:1 (needs 4.5)`) }
   }
 }
-if (!/--water:\s*color-mix\(in oklab,\s*color-mix\(in oklab,\s*var\(--w-mid\) calc\(var\(--f1\)[^;]*var\(--w-low\)\)[^;]*var\(--w-high\)\)/.test(css)) bad('globals.css: --water must be the three-stop heat scale low, mid, high')
+if (!/--water:\s*color-mix\(in oklch,\s*color-mix\(in oklch,\s*var\(--w-mid\) calc\(var\(--f1\)[^;]*var\(--w-low\)\)[^;]*var\(--w-high\)\)/.test(css)) bad('globals.css: --water must be the three-stop heat scale low, mid, high')
   { const th = fs.readFileSync(path.join(root, 'components/Theme.tsx'), 'utf8'); if (!/Math\.min\(1, 2 \* f\)/.test(th) || !/Math\.max\(0, 2 \* f - 1\)/.test(th)) bad('Theme.tsx: --f1 and --f2 must be min(1, 2f) and max(0, 2f - 1)') }
 {
   const prof = fs.readFileSync(path.join(root, 'components/RiverProfile.tsx'), 'utf8')
-  if (!/viewBox=\{`0 0 \$\{W\} \$\{H\}`\}/.test(prof) || !/width=\{W\}/.test(prof) || !/Math\.max\(280/.test(prof)) bad('RiverProfile: the picture must be drawn in pixels from the container width (minimum 280)')
+  if (!/viewBox=\{`0 0 \$\{W\} \$\{H\}`\}/.test(prof) || !/width=\{W\}/.test(prof) || !/Math\.max\(240/.test(prof)) bad('RiverProfile: the picture must be drawn in pixels from the container width (minimum 240)')
   const sizes = [...css.matchAll(/\.profile (?:text|\.num|\.rn|\.veilt)[^{]*\{[^}]*?font(?:-size)?:\s*(?:[0-9]+ )?(\d+)px/g)].map((m) => +m[1]); if (!sizes.length || sizes.some((z) => z < 12)) bad(`globals.css: SVG text under 12 px (${sizes.join(', ')})`)
 }
 

@@ -37,6 +37,7 @@ function start() {
   if (started || typeof window === 'undefined') return
   started = true
   state = parse(window.location.search)
+  if (noticeText) window.history.replaceState(null, '', window.location.pathname + toQuery(state))
   window.addEventListener('popstate', () => { state = parse(window.location.search); emit() })
 }
 function emit() { listeners.forEach((l) => l()) }

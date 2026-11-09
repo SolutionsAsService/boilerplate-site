@@ -3,10 +3,10 @@
   --bg: #ece8dc; --card: #f8f5ec; --ink: #0f0e13; --ink2: #3d3b46; --rule: #cdc8b8; --focus: #0f0e13;
   --hi: #cfee00; --on-hi: #0f0e13; --btn: #0f0e13; --on-btn: #cfee00; --hdr: #0f0e13; --on-hdr: #ece8dc;
   --ok: #0d6b3c; --on-ok: #ffffff; --warn: #7a4e00; --pfd: #ffb000; --on-pfd: #1b1000; --bad: #b3112f; --on-bad: #ffffff;
-  --k1: #1f7a45; --k2: #1f7a45; --k3: #e6b800; --k4: #e87a1e; --k5: #c4301f; --on-k1: #ffffff; --on-k3: #1b1500; --on-k4: #1b0d00; --on-k5: #ffffff;
+  --k1: #1f7a45; --k2: #1f7a45; --k3: #e6b800; --k4: #e87a1e; --k5: #6e1230; --on-k1: #ffffff; --on-k3: #1b1500; --on-k4: #1b0d00; --on-k5: #ffffff;
   --w-low: #b6d100; --w-mid: #2a3cff; --w-high: #d4123c;
   --f1: 1; --f2: 0;
-  --water: color-mix(in oklab, color-mix(in oklab, var(--w-mid) calc(var(--f1) * 100%), var(--w-low)) calc((1 - var(--f2)) * 100%), var(--w-high));
+  --water: color-mix(in oklch, color-mix(in oklch, var(--w-mid) calc(var(--f1) * 100%), var(--w-low)) calc((1 - var(--f2)) * 100%), var(--w-high));
   --water-text: color-mix(in oklab, var(--water) 46%, var(--ink));
   --display: "Arial Black", "Helvetica Neue", Arial, system-ui, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
@@ -134,3 +134,5 @@ footer.site a.foot { display: inline-block; padding: 8px 2px; min-height: 44px; 
 .grp { margin: 0 0 6px; }
 @media (forced-colors: active) { .hero::before { display: none; } }
 .skiprow { position: absolute; left: -9999px; } .skiprow:focus { position: static; display: inline-block; margin: 6px 0; padding: 8px 12px; background: var(--hi); color: var(--on-hi); font: 800 .8rem var(--mono); }
+
+.profile .narrow .num { font-size: 12px; } .profile .shut .rap { opacity: .35; }
