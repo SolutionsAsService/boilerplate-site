@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { RIVERS, riverById } from '@/lib/data'
-import { classAt, classLabel, classShown, CLASS_WORDS, elevation, fmtCfs, waterStatus, WATER_WORDS } from '@/lib/model'
+import { classAt, classLabel, classShown, CLASS_MAX, CLASS_WORDS, elevation, rawClass, fmtCfs, waterStatus, WATER_WORDS } from '@/lib/model'
 import { setChoice, useChoice } from '@/lib/state'
 
 /** The river as a profile: miles across, feet of elevation up. Each rapid is a badge whose size and numeral are its class at the gauge's level.
@@ -70,7 +70,7 @@ export default function RiverProfile() {
   const veil2 = water === 'closed' ? `above ${fmtCfs(river.maxCfs)}` : `needs ${fmtCfs(river.minCfs)}`
 
   return (
-    <div className="profile" ref={box}>
+    <div className="profile" id="profile" ref={box}>
       <div className="chips" role="group" aria-label="Choose a river">
         {RIVERS.map((r) => <button key={r.id} type="button" className="chip" aria-pressed={r.id === id} onClick={() => setChoice({ river: r.id })}>{r.name}<small>{r.tag}</small></button>)}
       </div>
@@ -97,7 +97,7 @@ export default function RiverProfile() {
             <g key={r.name} className={'rap k' + k}>
               <line className="stem" x1={x} x2={x} y1={y} y2={by + rad} />
               <circle cx={x} cy={by} r={rad} className="badge" />
-              <text x={x} y={by + 5} textAnchor="middle" className="num">{classLabel(c)}</text>
+              <text x={x} y={by + 5} textAnchor="middle" className="num">{classLabel(c) + (rawClass(r, river.refCfs, cfs) > CLASS_MAX + 1e-9 ? '*' : '')}</text>
               {!narrow && <text x={Math.min(W - 6, Math.max(6, x))} y={by - rad - 5} textAnchor={x > W - 80 ? 'end' : x < 80 ? 'start' : 'middle'} className="rn">{r.name}</text>}
             </g>
           )
@@ -106,7 +106,7 @@ export default function RiverProfile() {
         {!ok && <g><rect className="veil" x={L} y={T} width={iw} height={ih} /><text className="veilt" x={L + iw / 2} y={T + ih / 2 - 4} textAnchor="middle">{veil1}</text><text className="veilt" x={L + iw / 2} y={T + ih / 2 + 16} textAnchor="middle">{veil2}</text></g>}
       </svg>
       <p className="small">{`${river.startFt.toLocaleString('en-US')} ft at the put-in, ${river.endFt.toLocaleString('en-US')} ft at the take-out: ${(river.startFt - river.endFt).toLocaleString('en-US')} ft of fall in ${river.miles} miles. Heights are drawn ${exag}× taller than miles, so the river looks steeper than it is. Circle area grows with the class of each rapid; the zigzag is its whitewater.`}</p>
-      <p className="small">{CLASS_WORDS} <a href="/safety/#scale">What the classes mean</a>.</p>
+      <p className="small">{CLASS_WORDS} <a href="/safety/#scale">What the classes mean</a>. A * on a circle or (cap) in a table means the formula gives more than V+ and the model stops there.</p>
       <div className="runbar">
         <button type="button" className="btn" onClick={step} disabled={!ok}>{reduce ? 'Next rapid' : run ? 'Pause the raft' : p === null || p >= 1 ? 'Run the river' : 'Resume'}</button>
         <p className="now">{!ok ? WATER_WORDS[water] + '.' : mile === null ? 'Press the button to put the raft in at mile 0.' : done ? 'Take-out at mile ' + river.miles + '.' : here ? `${here.name}: class ${classLabel(classAt(here, river.refCfs, cfs))}. ${here.dropFt} ft of drop.` : `Mile ${mile.toFixed(1)}.`}</p>

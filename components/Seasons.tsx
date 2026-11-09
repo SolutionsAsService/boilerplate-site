@@ -9,8 +9,8 @@ const CODE = { good: 'G', pushy: 'P', low: 'L', closed: 'X' } as const
 export default function Seasons() {
   const { cfs, river } = useChoice()
   const rove = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    const k = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key as 'ArrowRight']; if (!k) return
-    const bs = Array.from((e.currentTarget.parentElement as HTMLElement).querySelectorAll('button')) as HTMLButtonElement[], i = bs.indexOf(e.currentTarget), n = bs[(i + k + bs.length) % bs.length]
+    const k = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1, Home: 0, End: 0 }[e.key as 'ArrowRight']; if (k === undefined) return
+    const bs = Array.from((e.currentTarget.parentElement as HTMLElement).querySelectorAll('button')) as HTMLButtonElement[], i = bs.indexOf(e.currentTarget), n = e.key === 'Home' ? bs[0] : e.key === 'End' ? bs[bs.length - 1] : bs[(i + k + bs.length) % bs.length]
     e.preventDefault(); bs.forEach((b) => b.setAttribute('tabindex', '-1')); n.setAttribute('tabindex', '0'); n.focus()
   }
   return (

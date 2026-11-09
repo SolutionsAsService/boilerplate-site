@@ -62,12 +62,14 @@ if (trips.depositPct !== 25) bad('the deposit is pinned at 25% (the About page s
   if (!fits('black-narrows', { exp: 'iii' }, 2200)) bad('an experienced adult should fit Black Narrows at 2,200')
   if (!M.blockers(rv['elk-fork'], g({ exp: 'none' }), 3000).some((s) => /closed/.test(s))) bad('Elk Fork is closed at 3,000')
   if (!M.blockers(rv['elk-fork'], g({ exp: 'none' }), 250).some((s) => /too low/.test(s))) bad('Elk Fork is too low at 250')
-  // the class ceiling: a five year old with no experience cannot be asked to run class III, whatever the river's own limits say
+  // the class ceiling: the class shown (rounded to a half) must not pass the group's limit, and the refusal names the rapid and the limit
   const kid = { age: 5, lb: 40, exp: 'none' }
-  if (!fits('elk-fork', kid, 600)) bad('a 5 year old fits Elk Fork at 600 cfs (hardest rapid II+)')
-  const why = M.blockers(rv['elk-fork'], g(kid), 1200); if (!why.some((s) => /Staircase/.test(s) && /class III/.test(s) && /limit is class II\+/.test(s))) bad('a 5 year old at 1,200 cfs must be refused for The Staircase (class III), with the limit named: ' + why.join(' | '))
+  if (!fits('elk-fork', kid, 600) || !fits('elk-fork', kid, 1200) || !fits('elk-fork', kid, 2500)) bad('Elk Fork is a river a 5 year old with no experience can ride across its whole runnable range (hardest rapid II+)')
+  const why = M.blockers(rv['granite-run'], g({ age: 9, exp: 'iii' }), 2000); if (!why.some((s) => /Dentist's Chair/.test(s) && /class IV/.test(s) && /limit is class II\+/.test(s))) bad('a 9 year old at 2,000 cfs on Granite Run must be refused for Dentist\'s Chair (class IV), with the limit II+ named: ' + why.join(' | '))
   if (fits('granite-run', { age: 12, lb: 120, exp: 'some' }, 3000)) bad('a 12 year old must not be sent down Granite Run at 3,000 cfs (Dentist\'s Chair is class V)')
   if (!fits('granite-run', { age: 30, lb: 180, exp: 'iii' }, 3000)) bad('an experienced adult fits Granite Run at 3,000 cfs')
+  near(M.hardest(rv['granite-run'], 3000), refClass(rv['granite-run'].rapids[2], rv['granite-run'], 3000), 1e-9, 'hardest of Granite Run at 3,000')
+  if (!/\(cap\)/.test(M.hardestShown(rv['black-narrows'], 6000)) || /\(cap\)/.test(M.hardestShown(rv['granite-run'], 1200))) bad('hardestShown flags only capped values')
   // ceilings
   for (const [o, cap] of [[{ age: 30, exp: 'none' }, 2.5], [{ age: 30, exp: 'some' }, 4], [{ age: 30, exp: 'iii' }, 5.5], [{ age: 9, exp: 'iii' }, 2.5], [{ age: 10, exp: 'iii' }, 3.5], [{ age: 13, exp: 'iii' }, 3.5], [{ age: 14, exp: 'iii' }, 5.5], [{ age: 14, exp: 'some' }, 4]]) near(M.classCeiling(g(o)), cap, 0, `class ceiling for ${JSON.stringify(o)}`)
   // a class above the cap is flagged, never printed as if measured
@@ -123,7 +125,7 @@ for (const t of trips.trips) if (!rivers.rivers.some((r) => r.id === t.river)) b
     if (!about.includes(row)) bad(`about: the table row for ${r.name} should read "${row}"`)
   }
   const homeRaw = fs.readFileSync(path.join(out, 'index.html'), 'utf8'), home = text(homeRaw)
-  for (const rv of rivers.rivers) { const s = `${rv.miles} miles · riders ${rv.minAge}+ and ${rv.minLb} lb+ · runs from ${rv.minCfs.toLocaleString('en-US')} to ${rv.maxCfs.toLocaleString('en-US')} cfs`; if (!home.includes(s)) bad(`home: the card for ${rv.name} should say "${s}"`) }
+  for (const rv of rivers.rivers) { const s = `${rv.miles} miles (${Math.round(rv.miles * 1.609)} km) · riders ${rv.minAge}+ and ${rv.minLb} lb+ · runs from ${rv.minCfs.toLocaleString('en-US')} to ${rv.maxCfs.toLocaleString('en-US')} cfs`; if (!home.includes(s)) bad(`home: the card for ${rv.name} should say "${s}"`) }
   const tp = text(fs.readFileSync(path.join(out, 'trips/index.html'), 'utf8'))
   for (const t of trips.trips) if (!tp.includes(`$${t.price} per person`)) bad(`trips: the price of ${t.title} should print as $${t.price} per person`)
   for (const t of trips.trips) {

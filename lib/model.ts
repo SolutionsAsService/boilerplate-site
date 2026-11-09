@@ -34,6 +34,7 @@ export function classShown(r: Rapid, ref: number, cfs: number): string {
 export function hardestRapid(river: River, cfs: number): Rapid {
   return river.rapids.reduce((a, b) => (classAt(b, river.refCfs, cfs) > classAt(a, river.refCfs, cfs) ? b : a))
 }
+export function hardestShown(river: River, cfs: number): string { return classShown(hardestRapid(river, cfs), river.refCfs, cfs) }
 export function hardest(river: River, cfs: number): number {
   return Math.max(...river.rapids.map((r) => classAt(r, river.refCfs, cfs)))
 }
@@ -87,7 +88,7 @@ export function blockers(river: River, g: Guest, cfs: number): string[] {
   if (g.lb < river.minLb) out.push(`The lightest rider must weigh at least ${river.minLb} lb (you said ${g.lb}).`)
   if (RANK[g.exp] < RANK[river.needs]) out.push(river.needs === 'iii' ? 'Riders must have paddled class III before.' : 'Riders need at least a little paddling experience.')
   const hard = hardestRapid(river, cfs), hc = classAt(hard, river.refCfs, cfs), cap = classCeiling(g)
-  if (waterStatus(river, cfs) !== 'closed' && waterStatus(river, cfs) !== 'low' && hc > cap + 1e-9) out.push(`At ${cfs.toLocaleString('en-US')} cfs the hardest rapid, ${hard.name}, is class ${classLabel(hc)}. This group's limit is class ${classLabel(cap)} (set by its youngest rider and its experience).`)
+  if (waterStatus(river, cfs) !== 'closed' && waterStatus(river, cfs) !== 'low' && Math.round(hc * 2) / 2 > cap + 1e-9) out.push(`At ${cfs.toLocaleString('en-US')} cfs the hardest rapid, ${hard.name}, is class ${classLabel(hc)}. This group's limit is class ${classLabel(cap)} (set by its youngest rider and its experience).`)
   const w = waterStatus(river, cfs)
   if (w === 'closed') out.push(`At ${cfs.toLocaleString('en-US')} cfs the river is closed: it is above ${river.maxCfs.toLocaleString('en-US')} cfs.`)
   if (w === 'low') out.push(`At ${cfs.toLocaleString('en-US')} cfs the river is too low: it needs ${river.minCfs.toLocaleString('en-US')} cfs.`)

@@ -1,6 +1,6 @@
 'use client'
 import { FLOW, RIVERS } from '@/lib/data'
-import { blockers, classLabel, fmtCfs, hardest, waterStatus, WATER_WORDS, type Needs } from '@/lib/model'
+import { blockers, fmtCfs, hardestShown, waterStatus, WATER_WORDS, type Needs } from '@/lib/model'
 import { RANGE, setChoice, useChoice, useNotice } from '@/lib/state'
 import NumField from './NumField'
 import CarryLink from './CarryLink'
@@ -43,7 +43,7 @@ export default function GaugeBar({ compact = false, hero = false, part }: { comp
     <>
       {!compact && (
         <ul className="statuses" aria-label={hero ? 'What your group can ride' : 'Each river at this level'}>
-          {RIVERS.map((r) => { const ws = waterStatus(r, cfs), why = hero ? blockers(r, g, cfs) : []; const cls = ws === 'closed' || ws === 'low' ? 'no trips' : 'hardest rapid ' + classLabel(hardest(r, cfs)); return <li key={r.id} className={'st ' + ws + (hero ? (why.length ? ' no' : ' yes') : '')}><b>{r.name}</b><span>{WATER_WORDS[ws]} · {cls}</span>{hero && <span className="verd">{why.length ? 'Not for this group: ' + why[0] : 'Your group can ride it.'}</span>}</li> })}
+          {RIVERS.map((r) => { const ws = waterStatus(r, cfs), why = hero ? blockers(r, g, cfs) : []; const cls = ws === 'closed' || ws === 'low' ? 'no trips' : 'hardest rapid ' + hardestShown(r, cfs); return <li key={r.id} className={'st ' + ws + (hero ? (why.length ? ' no' : ' yes') : '')}><b>{r.name}</b><span>{WATER_WORDS[ws]} · {cls}</span>{hero && <span className="verd">{why.length ? 'Not for this group: ' + why[0] : 'Your group can ride it.'}</span>}</li> })}
         </ul>
       )}
       {hero && <div className="chips"><CarryLink href="/plan/" className="btn">Find a trip for this group</CarryLink><CarryLink href="/trips/" className="chip">See the five trips</CarryLink></div>}

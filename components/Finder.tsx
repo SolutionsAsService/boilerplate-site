@@ -1,6 +1,6 @@
 'use client'
 import { RIVERS, TRIPS, TIERS, DEPOSIT_PCT, riverById } from '@/lib/data'
-import { blockers, classLabel, fmtCfs, hardest, money, quote, runnableMonths, waterStatus, WATER_WORDS, type Needs } from '@/lib/model'
+import { blockers, fmtCfs, hardestShown, money, quote, runnableMonths, waterStatus, WATER_WORDS, type Needs } from '@/lib/model'
 import { RANGE, setChoice, useChoice } from '@/lib/state'
 import NumField from './NumField'
 import CarryLink from './CarryLink'
@@ -25,7 +25,7 @@ export default function Finder() {
           <li key={t.slug} className="tc ok">
             <p className="kick">{r.name} · {r.tag}</p>
             <h3><CarryLink href={`/trips/${t.slug}/`}>{t.title}</CarryLink></h3>
-            <p className="meta">{t.days > 1 ? t.days + ' days' : t.hours + ' hours'} · hardest rapid {classLabel(hardest(r, c.cfs))} at this level · {WATER_WORDS[waterStatus(r, c.cfs)]}</p>
+            <p className="meta">{t.days > 1 ? t.days + ' days' : t.hours + ' hours'} · hardest rapid {hardestShown(r, c.cfs)} at this level · {WATER_WORDS[waterStatus(r, c.cfs)]}</p>
             <p className="price"><b>{money(q.total)}</b> for {c.n}{q.pct ? ` after ${q.pct}% off` : ''} <span className="small">({money(Math.round(q.perPerson * 100) / 100)} each; deposit {money(q.deposit)})</span></p>
           </li>
         ))}

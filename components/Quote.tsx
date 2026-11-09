@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { DEPOSIT_PCT, SITE, TIERS, TRIPS, riverById, tripBySlug } from '@/lib/data'
-import { blockers, classLabel, fmtCfs, hardest, money, quote, type Needs } from '@/lib/model'
+import { blockers, fmtCfs, hardestShown, money, quote, type Needs } from '@/lib/model'
 import { RANGE, setChoice, useChoice } from '@/lib/state'
 import NumField from './NumField'
 
@@ -34,7 +34,7 @@ export default function Quote({ slug }: { slug?: string }) {
         <tr><th scope="row">Total</th><td className="n"><b>{money(q.total)}</b></td></tr>
         <tr><th scope="row">Deposit to hold the date ({DEPOSIT_PCT}%)</th><td className="n">{money(q.deposit)}</td></tr>
       </tbody></table>
-      <p className={'verdict ' + (why.length ? 'bad' : 'good')} role="status" aria-live="polite">{why.length ? <><b>This group cannot take this trip at {fmtCfs(c.cfs)}.</b> {why.join(' ')}</> : <><b>This group can take this trip.</b> At {fmtCfs(c.cfs)} its hardest rapid is class {classLabel(hardest(r, c.cfs))}.</>}</p>
+      <p className={'verdict ' + (why.length ? 'bad' : 'good')} role="status" aria-live="polite">{why.length ? <><b>This group cannot take this trip at {fmtCfs(c.cfs)}.</b> {why.join(' ')}</> : <><b>This group can take this trip.</b> At {fmtCfs(c.cfs)} its hardest rapid is class {hardestShown(r, c.cfs)}.</>}</p>
       <div className="chips"><a className="btn" href={href}>Email this request</a><button type="button" className="chip" onClick={() => { navigator.clipboard?.writeText(text).then(() => setCopied(true), () => setCopied(false)) }}>{copied ? 'Copied' : 'Copy the request'}</button></div>
       <p className="small">Whether the trip can run depends on the river level when you go, so the check above uses the gauge setting, not your date. This opens your email program with the request filled in. No payment is taken here, and nothing is sent until you send the email.</p>
     </section>

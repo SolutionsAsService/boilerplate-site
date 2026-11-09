@@ -10,6 +10,7 @@ export default function Home() {
       <section className="hero">
         <div className="wrap">
           <p className="kicker">Whitewater rafting · three rivers · one gauge</p>
+          <a className="skiprow" href="#profile">Skip the controls to the river profile</a>
           <div className="top">
             <div className="head">
               <h1>The river decides.</h1>
@@ -26,7 +27,7 @@ export default function Home() {
         <h2>Three rivers</h2>
         <ul className="rivers">
           {RIVERS.map((r) => (
-            <li key={r.id}><p className="kick">{r.tag}</p><h3>{r.name}</h3><p>{r.blurb}</p><p className="meta">{r.miles} miles · riders {r.minAge}+ and {r.minLb} lb+ · runs from {r.minCfs.toLocaleString('en-US')} to {r.maxCfs.toLocaleString('en-US')} cfs</p></li>
+            <li key={r.id}><p className="kick">{r.tag}</p><h3>{r.name}</h3><p>{r.blurb}</p><p className="meta">{r.miles} miles ({Math.round(r.miles * 1.609)} km) · riders {r.minAge}+ and {r.minLb} lb+ · runs from {r.minCfs.toLocaleString('en-US')} to {r.maxCfs.toLocaleString('en-US')} cfs</p></li>
           ))}
         </ul>
         <h2>When to go</h2>
